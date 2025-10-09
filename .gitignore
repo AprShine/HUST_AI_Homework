@@ -11,6 +11,10 @@ wheels/
 
 # datasets
 data/
+data.zip
 
 # jupyter
 .ipynb_checkpoints/
+
+# pycharm
+.idea

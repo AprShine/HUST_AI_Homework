@@ -4,6 +4,7 @@ import torchvision
 import numpy as np
 import os, PIL, pathlib
 import matplotlib.pylab as plt
+import warnings
 
 from PIL import Image
 from torchvision import transforms, datasets 
@@ -90,6 +91,7 @@ def show_data_expl(data_path_name):
 
 
 def main():
+    print(torch.__version__)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(device)
 
@@ -99,9 +101,9 @@ def main():
     # 类别数量
     folder_names = [str(path).split('/')[0] for path in os.listdir(data_dir)]
     translate = {"cane": "dog", "cavallo": "horse", "elefante": "elephant", "farfalla": "butterfly", "gallina": "chicken", "gatto": "cat", "mucca": "cow", "pecora": "sheep", "scoiattolo": "squirrel", "ragno": "spider", 
-                  "dog": "cane", "cavallo": "horse", "elephant" : "elefante", "butterfly": "farfalla", "chicken": "gallina", "cat": "gatto", "cow": "mucca", "spider": "ragno", "squirrel": "scoiattolo"}
+                  "dog": "cane", "horse": "cavallo", "elephant" : "elefante", "butterfly": "farfalla", "chicken": "gallina", "cat": "gatto", "cow": "mucca", "spider": "ragno", "squirrel": "scoiattolo"}
     class_names=[translate[folder_name] for folder_name in folder_names]
-    print(class_names)
+    print("Class Number: ",class_names)
     
     # 数据导入
     total_data=import_data(dataset_path)
@@ -114,7 +116,7 @@ def main():
     train_data, test_data = torch.utils.data.random_split(total_data, [train_size, test_size])
     print(len(train_data),len(test_data))
 
-    batch_size = 32 
+    batch_size = 512
     train_dl = torch.utils.data.DataLoader(
         train_data,
         batch_size=batch_size,
@@ -131,7 +133,7 @@ def main():
         print("labels: ", labels)
         break
 
-    # resnet网络
+    # resnet网络，节省时间，只训练最后全连接层的部分
     resnet_18=models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
     num_ftrs=resnet_18.fc.in_features
     for param in resnet_18.parameters():
@@ -141,7 +143,7 @@ def main():
 
     # 超参数
     learning_rate=1e-3
-    epochs = 1
+    epochs = 10
 
     # Loss and opt
     loss_fn=nn.CrossEntropyLoss()
@@ -168,5 +170,27 @@ def main():
         print(template.format(i + 1, epoch_train_acc*100, epoch_train_loss, epoch_test_acc*100, epoch_test_loss))
     
     print("Done")
+    # 保存模型
+    torch.save(model.state_dict(), "./models/model.pth")
+    # 可视化
+    warnings.filterwarnings("ignore")  # 忽略警告信息
+
+    epochs_range = range(epochs)
+
+    plt.figure(figsize=(12, 3))
+    plt.subplot(1, 2, 1)
+
+    plt.plot(epochs_range, train_acc, label='Training Accuracy')
+    plt.plot(epochs_range, test_acc, label='Test Accuracy')
+    plt.legend(loc='lower right')
+    plt.title('Training Accuracy')
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs_range, train_loss, label='Training Loss')
+    plt.plot(epochs_range, test_loss, label='Test Loss')
+    plt.legend(loc='upper right')
+    plt.title('Training= Loss')
+    plt.show()
+
 if __name__ == "__main__":
     main()
