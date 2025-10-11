@@ -21,9 +21,13 @@ translate = {"cane": "dog", "cavallo": "horse", "elefante": "elephant", "farfall
 总共 26179 张动物图像，其中随机使用 80% 作为训练集，20% 作为测试集
 ## ResNet
 
-是 CNN 中经典的网络架构，常用于图像识别，目前最新的网络架构或多或少有参考 ResNet 的思想，训练采用 pytorch 中预设的 resnet-18 进行训练。
+是 CNN 中经典的网络架构，常用于图像识别，目前最新的网络架构或多或少有参考 ResNet 的思想，即残差链接，便于增加神经网络的深度。
 
 ## 训练过程
+
+### 网络架构
+
+训练采用 pytorch 中预设的 resnet-18 进行训练，共有 18 层 resnet block。
 
 ### 超参数
 
@@ -77,8 +81,13 @@ Done
 ```
 
 ### 可视化
+1. 模型训练相关
 ![Figure1](./sources/Figure_1.png)
+2. 模型测试
+![Figure2](./sources/Figure_2.png)
 
 ## 复现
 
-请自行下载合适版本的 pytorch pytorchvision，其他依赖，可使用 `uv sync` 进行同步
++ 请自行下载合适版本的 pytorch pytorchvision 
++ 其他依赖，可使用 `uv sync` 进行同步
++ 执行 `main.py` 即可，main 函数用于模型训练，run 函数用于模型测试

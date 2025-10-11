@@ -5,6 +5,7 @@ import numpy as np
 import os, PIL, pathlib
 import matplotlib.pylab as plt
 import warnings
+import random
 
 from PIL import Image
 from torchvision import transforms, datasets 
@@ -192,5 +193,61 @@ def main():
     plt.title('Training= Loss')
     plt.show()
 
+def run():
+    # 基本数据
+    dataset_path="./data/alessiocorrado99/animals10/versions/2/raw-img"
+    model_path="./models/model.pth"
+    data_dir = pathlib.Path(dataset_path)
+    sample_num=10
+    # 检查设备
+    print("Torchversion: ", torch.__version__)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("Device: ",device)
+    # 类型名称
+    folder_names = [str(path).split('/')[0] for path in os.listdir(data_dir)]
+    translate = {"cane": "dog", "cavallo": "horse", "elefante": "elephant", "farfalla": "butterfly", "gallina": "chicken", "gatto": "cat", "mucca": "cow", "pecora": "sheep", "scoiattolo": "squirrel", "ragno": "spider", 
+                  "dog": "cane", "horse": "cavallo", "elephant" : "elefante", "butterfly": "farfalla", "chicken": "gallina", "cat": "gatto", "cow": "mucca", "spider": "ragno", "squirrel": "scoiattolo"}
+    class_names=[translate[folder_name] for folder_name in folder_names]
+    print("Class Number: ",class_names)
+    # 创建模型
+    resnet_18=models.resnet18()
+    num_ftrs=resnet_18.fc.in_features
+    resnet_18.fc=nn.Linear(num_ftrs,10)
+    model=resnet_18.cuda() if device=="cuda" else resnet_18
+    # 加载模型
+    model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))
+    model.eval()
+
+    # 加载数据
+    total_data=import_data(dataset_path)
+    print("Image Number: ", len(total_data))
+    sample_idx_set=random.sample(range(len(total_data)),sample_num)
+    for idx in sample_idx_set:
+        print(total_data.samples[idx][0])
+    sample_set=torch.utils.data.Subset(total_data, sample_idx_set)
+    sample_loader=torch.utils.data.DataLoader(sample_set, batch_size=2, shuffle=False)
+
+    # 开始预测
+    idx=1
+    plt.figure(figsize=(30,10))
+    with torch.no_grad():
+        for images, labels in sample_loader:
+            images = images.to(device)
+            labels = labels.to(device)
+            outputs = model(images)
+            preds= outputs.argmax(dim=1)
+            for i in range(len(images)):
+                pred_class=class_names[preds[i].item()]
+                true_class=class_names[labels[i].item()]
+                print(f"Predicted: {pred_class}, Real: {true_class}")
+                plt.subplot(2,5,idx)
+                img=Image.open(total_data.samples[sample_idx_set[idx-1]][0])
+                plt.imshow(img)
+                plt.axis('off')
+                plt.title(f"Predicted: {pred_class}, Real: {true_class}")
+                idx+=1
+    plt.show()
+
 if __name__ == "__main__":
-    main()
+    # main()
+    run()
